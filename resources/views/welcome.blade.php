@@ -24,6 +24,18 @@
 
 <body class="antialiased">
 
+    <style>
+        /* Custom styling for the text label */
+        .text-label {
+            color: white;
+            /* Set text color to white */
+            font-size: 10px;
+            /* Set font size to 45px */
+            text-align: center;
+            /* Center the text */
+            /* You can add more styles as needed */
+        }
+    </style>
     <div class="container">
         <div class="row m-5">
             <div class="col-xl-5">
@@ -245,8 +257,21 @@
                 // Create a Leaflet polygon if coordinates exist and add it to the markersLayer
                 if (coordinates.length > 0) {
                     let polygon = L.polygon(coordinates, {
-                        color: randomColor // Assign the random color to the polygon
+                        color: randomColor,
+                        fillOpacity: 1.0 // Set fill opacity to 100% (1.0)
                     }).addTo(markersLayer).bindPopup(polygonName);
+                    let polygonCenter = L.latLng(L.polygon(coordinates).getBounds().getCenter());
+
+
+                    let customIcon = L.divIcon({
+                        className: 'text-label', // Custom CSS class for the label
+                        html: `<div>${polygonName}</div>`, // Text content of the label
+                        iconSize: [0, 0] // Set iconSize to zero to prevent the default icon from appearing
+                    });
+                    let labelMarker = L.marker(polygonCenter, {
+                        icon: customIcon,
+                        zIndexOffset: 1000 // Set a higher zIndex to ensure the label appears above the polygon
+                    }).addTo(markersLayer);
 
                     polygon.on('editable:vertex:dragend', function(e) {
                         let editedCoords = e.target.getLatLngs()[0]; // Get updated coordinates
@@ -287,27 +312,30 @@
                 let updatedCoordinates = [];
 
                 markersLayer.eachLayer(function(layer) {
-                    let polygonName = layer._popup.getContent();
+                    // Check if the layer has a popup
+                    if (layer.getPopup()) {
+                        let polygonName = layer.getPopup().getContent();
 
-                    if (editedPolygons.has(polygonName)) {
-                        let coords = layer.getLatLngs()[0];
-                        let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
+                        if (editedPolygons.has(polygonName)) {
+                            let coords = layer.getLatLngs()[0];
+                            let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
 
-                        coords.forEach(coord => {
-                            let {
-                                lat,
-                                lng: lon
-                            } = coord;
+                            coords.forEach(coord => {
+                                let {
+                                    lat,
+                                    lng: lon
+                                } = coord;
 
-                            let coordinateData = {
-                                name: polygonName,
-                                afdeling: afdeling, // Using retrieved afdeling value
-                                lat,
-                                lon
-                            };
+                                let coordinateData = {
+                                    name: polygonName,
+                                    afdeling: afdeling,
+                                    lat,
+                                    lon
+                                };
 
-                            updatedCoordinates.push(coordinateData);
-                        });
+                                updatedCoordinates.push(coordinateData);
+                            });
+                        }
                     }
                 });
 
