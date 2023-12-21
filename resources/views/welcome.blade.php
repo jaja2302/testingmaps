@@ -37,7 +37,8 @@
                     @endforeach
                 </select>
 
-                <button class="button button-blue" id="button">Show</button>
+                <button class="btn btn-primary" id="button">Show</button>
+                <a href="{{ route('uploadjson') }}" class="btn btn-outline-success">Update</a>
             </div>
 
 
@@ -49,7 +50,10 @@
         </div>
     </div>
 
+
+
     <script src="{{asset('Leatlef/leaflet.js')}}"></script>
+    <script src="{{asset('Leatlef/Leaflet.Editable.js')}}"></script>
 
     <script>
         var group = L.layerGroup();
@@ -69,12 +73,13 @@
         googleSatellite.addTo(map);
 
         var markersLayer = L.layerGroup().addTo(map); // Initialize markersLayer as a layer group and add it to the map
+        var markersLayer2 = L.layerGroup().addTo(map); // Initialize markersLayer as a layer group and add it to the map
 
         $('#button').click(function() {
             // Your code to execute when the button is clicked goes here
             var estate = $('#estate').val();
 
-            console.log(estate);
+            // console.log(estate);
 
             $.ajax({
                 url: "{{ route('drawmaps') }}",
@@ -86,7 +91,10 @@
                     var plot = JSON.parse(result);
 
                     const plotResult = Object.entries(plot['plot']);
-                    drawArrow(plotResult)
+                    const plotest = Object.entries(plot['plot_estate']);
+                    drawBlok(plotResult)
+                    drawPlot(plotest)
+
                 },
                 error: function(xhr, status, error) {
                     // Handle errors in the AJAX request
@@ -96,46 +104,225 @@
             });
         });
 
-        function drawArrow(plotResult) {
-            console.log(plotResult);
-            markersLayer.clearLayers(); // Clear the layers within markersLayer
+
+        function drawPlot(plotest) {
+            // console.log(plotest);
+            markersLayer2.clearLayers(); // Assuming markersLayer2 is the layer to contain the polygons
 
             let bounds = []; // Initialize an empty LatLngBounds object
 
-            const latLngArray = plotResult.map((item) => {
-                const latLngString = item[1].latln;
-                const coordinates = latLngString.match(/\[(.*?)\]/g);
-                if (coordinates) {
-                    return coordinates.map((coord) => {
-                        const [longitude, latitude] = coord
-                            .replace('[', '')
-                            .replace(']', '')
-                            .split(',')
-                            .map(parseFloat);
-                        return [latitude, longitude]; // Reversed to follow [lat, lon] format
+            // Iterate through the plotest array using a for loop
+            for (let i = 0; i < plotest.length; i++) {
+                let polygonName = plotest[i][0]; // Get the name of the polygon (e.g., "R010")
+                let coordinates = []; // Array to store polygon coordinates
+
+                let polygonCoords = plotest[i][1]; // Array containing objects with lat lon info
+
+                // Iterate through the polygonCoords array using a for loop
+                for (let j = 0; j < polygonCoords.length; j++) {
+                    let lat = polygonCoords[j]['lat'];
+                    let lon = polygonCoords[j]['lon'];
+                    let est = polygonCoords[j]['est'];
+
+                    if (typeof lat !== 'undefined' && typeof lon !== 'undefined') {
+                        coordinates.push([lat, lon]); // Push coordinates as an array
+                        bounds.push([lat, lon]); // Extend bounds with each coordinate
+                    }
+                }
+
+
+                // Create a Leaflet polygon if coordinates exist and add it to the markersLayer2
+                if (coordinates.length > 0) {
+
+                    // let polygon = L.polygon(coordinates, {
+                    //     color: 'blue'
+                    // }).addTo(markersLayer2).bindPopup(polygonName);
+
+                    let polygon = L.polygon(coordinates, {
+                        color: 'black'
+                    }).addTo(markersLayer2)
+
+
+                    // Add event listener for vertex drag end
+                    polygon.on('editable:vertex:dragend', function(e) {
+                        console.log('Edited polygon:', e.target.getLatLngs());
+                        // e.target.getLatLngs() will give you the updated coordinates after drag
+                        // You can further process these coordinates as needed
                     });
+
+                    // polygon.enableEdit();
                 }
-                return [];
-            });
+            }
 
-            latLngArray.forEach((coordinates, index) => {
-                const polygonCoords = coordinates.map(([lat, lon]) => [lat, lon]);
-                const name = plotResult[index][0]; // Get the name from plotResult at the corresponding index
+            // Create a LatLngBounds object and fit the map to its bounds
+            if (bounds.length > 0) {
+                map.fitBounds(bounds);
+            }
 
-                if (polygonCoords.length > 2) { // Only draw polygons with at least 3 points
-                    const polygon = L.polygon(polygonCoords, {
-                        color: 'red',
-                        weight: 2
-                    }).addTo(markersLayer).bindPopup(name); // Bind popup with the name
+            // let saveButton = document.createElement('button');
+            // saveButton.textContent = 'Save Changes';
+            // saveButton.style.margin = '10px';
+            // document.body.appendChild(saveButton);
 
-                    // Extend the bounds with the polygon's coordinates
-                    bounds.push(...polygon.getLatLngs());
+            // saveButton.addEventListener('click', function() {
+            //     let updatedCoordinates = [];
+
+            //     // Iterate through polygons to retrieve updated coordinates
+            //     markersLayer2.eachLayer(function(layer) {
+            //         let coords = layer.getLatLngs()[0]; // Get updated coordinates of the polygon
+            //         let polygonData = [];
+
+            //         coords.forEach(coord => {
+            //             let {
+            //                 lat,
+            //                 lng: lon
+            //             } = coord; // Destructure 'lng' as 'lon'
+            //             let est = 'SJE'; // Hardcoded value for 'est'
+
+            //             polygonData.push({
+            //                 lat,
+            //                 lon,
+            //                 est
+            //             });
+            //         });
+
+            //         updatedCoordinates.push(polygonData);
+            //     });
+
+            //     // Convert to JSON
+            //     let jsonData = JSON.stringify(updatedCoordinates, null, 2);
+
+            //     // Create a Blob and download as a text file
+            //     let blob = new Blob([jsonData], {
+            //         type: 'application/json'
+            //     });
+            //     let link = document.createElement('a');
+            //     link.download = 'edited_coordinates.json';
+            //     link.href = URL.createObjectURL(blob);
+            //     link.click();
+            // });
+
+
+
+        }
+
+
+        function drawBlok(plotResult) {
+            // console.log(plotResult);
+            markersLayer.clearLayers(); // Assuming markersLayer is the layer to contain the polygons
+
+            let bounds = []; // Initialize an empty LatLngBounds object
+            let editedPolygons = new Set(); // Declare editedPolygons before the loop
+            let afdelingMap = {};
+
+            // Iterate through the plotResult array using a for loop
+            for (let i = 0; i < plotResult.length; i++) {
+                let polygonName = plotResult[i][0]; // Get the name of the polygon (e.g., "R010")
+                let coordinates = []; // Array to store polygon coordinates
+
+                // console.log(polygonName);
+                let polygonCoords = plotResult[i][1]; // Array containing objects with lat lon info
+
+                // Iterate through the polygonCoords array using a for loop
+                for (let j = 0; j < polygonCoords.length; j++) {
+                    let lat = polygonCoords[j]['lat'];
+                    let lon = polygonCoords[j]['lon'];
+                    let afdeling = polygonCoords[j]['afdeling'];
+
+                    // console.log(afdeling);
+
+                    if (typeof lat !== 'undefined' && typeof lon !== 'undefined') {
+                        coordinates.push([lat, lon]); // Push coordinates as an array
+                        bounds.push([lat, lon]); // Extend bounds with each coordinate
+                        afdelingMap[polygonName] = afdeling;
+                    }
                 }
+
+                let randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16); // Generate a random color
+
+                // Create a Leaflet polygon if coordinates exist and add it to the markersLayer
+                if (coordinates.length > 0) {
+                    let polygon = L.polygon(coordinates, {
+                        color: randomColor // Assign the random color to the polygon
+                    }).addTo(markersLayer).bindPopup(polygonName);
+
+                    polygon.on('editable:vertex:dragend', function(e) {
+                        let editedCoords = e.target.getLatLngs()[0]; // Get updated coordinates
+                        editedPolygons.add(polygonName); // Add the edited polygon's name to the set
+
+                        let afdeling = afdelingMap[polygonName];
+
+
+                        // Log polygon information along with coordinates and afdeling in JSON-like format
+                        let polygonData = {
+                            name: polygonName,
+                            afdeling: afdeling,
+                            coordinates: []
+                        };
+
+                        editedCoords.forEach(coord => {
+                            polygonData.coordinates.push({
+                                lat: coord.lat,
+                                lon: coord.lng
+                            });
+                        });
+
+                        console.log(JSON.stringify(polygonData, null, 2));
+                    });
+
+
+
+                    polygon.enableEdit();
+                }
+            }
+
+            let saveButton = document.createElement('button');
+            saveButton.textContent = 'Save Changes';
+            saveButton.style.margin = '10px';
+            document.body.appendChild(saveButton);
+
+            saveButton.addEventListener('click', function() {
+                let updatedCoordinates = [];
+
+                markersLayer.eachLayer(function(layer) {
+                    let polygonName = layer._popup.getContent();
+
+                    if (editedPolygons.has(polygonName)) {
+                        let coords = layer.getLatLngs()[0];
+                        let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
+
+                        coords.forEach(coord => {
+                            let {
+                                lat,
+                                lng: lon
+                            } = coord;
+
+                            let coordinateData = {
+                                name: polygonName,
+                                afdeling: afdeling, // Using retrieved afdeling value
+                                lat,
+                                lon
+                            };
+
+                            updatedCoordinates.push(coordinateData);
+                        });
+                    }
+                });
+
+                let jsonData = JSON.stringify(updatedCoordinates, null, 2);
+
+                let blob = new Blob([jsonData], {
+                    type: 'application/json'
+                });
+                let link = document.createElement('a');
+                link.download = 'edited_coordinates.json';
+                link.href = URL.createObjectURL(blob);
+                link.click();
             });
 
             // Create a LatLngBounds object and fit the map to its bounds
             if (bounds.length > 0) {
-                map.fitBounds(L.latLngBounds(bounds));
+                map.fitBounds(bounds);
             }
         }
     </script>

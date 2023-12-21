@@ -26,6 +26,9 @@ class DashboardController extends Controller
 
     public function drawmaps(Request $request)
     {
+
+
+
         $est = $request->input('estate');
 
 
@@ -34,30 +37,47 @@ class DashboardController extends Controller
             ->join('afdeling', 'afdeling.id', '=', 'blok.afdeling')
             ->join('estate', 'estate.id', '=', 'afdeling.estate')
             ->where('estate.id', $est)
+            // ->whereIn('blok.afdeling', [144, 145])
             ->get();
 
 
-        $getplot = $getplot->groupBy(function ($item) {
-            return $item->namaafd . '_' . $item->nama;
-        });
-        $getplot = json_decode($getplot, true);
+        $getplot = $getplot->groupBy('nama');
 
-        // dd($getplot['OA_A001']);
+        $getplot = json_decode($getplot, true);;
 
-        $pkLatLnnew = array();
-        foreach ($getplot as $key => $value) {
-            $latln2 = '';
-            foreach ($value as $value2) {
-                # code...
-                // dd($value2);
-                $latln2 .= '[' . $value2['lon'] . ',' . $value2['lat'] . '],';
-                $pkLatLnnew[$key]['afd'] = $value2['namaafd'];
-                $pkLatLnnew[$key]['latln'] = $latln2;
-            }
-        }
+        // dd($getplot);
+
+        $estplot = DB::table('estate_plot')
+            ->select('estate_plot.*')
+            ->join('estate', 'estate.est', '=', 'estate_plot.est')
+            ->where('estate.id', $est)
+            ->get();
 
 
-        $plot['plot'] = $pkLatLnnew;
+        $estplot = $estplot->groupBy('est');
+
+        $estplot = json_decode($estplot, true);;
+
+
+
+
+        // dd($estplot);
+        // $pkLatLnnew = array();
+        // $latln2 = '';
+        // foreach ($getplot as $key => $value) {
+        //     foreach ($value as $key2 => $value2) {
+        //         # code...
+
+        //         $latln2 .= '[' . $value2['lon'] . ',' . $value2['lat'] . '],';
+        //         $pkLatLnnew[$key]['afd'] = $value2['namaafd'];
+        //         $pkLatLnnew[$key]['latln'] = $latln2;
+        //     }
+        // }
+
+        // dd($pkLatLnnew);
+
+        $plot['plot'] = $getplot;
+        $plot['plot_estate'] = $estplot;
         // dd($plot);
         echo json_encode($plot);
         // dd($est);
