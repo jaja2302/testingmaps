@@ -80,12 +80,14 @@
             var estate = $('#estate').val();
 
             // console.log(estate);
+            var _token = $('input[name="_token"]').val();
 
             $.ajax({
                 url: "{{ route('drawmaps') }}",
                 method: 'get', // Specify the HTTP method (POST, GET, etc.)
                 data: {
-                    estate: estate
+                    estate: estate,
+                    _token: _token
                 }, // Data to be sent to the server
                 success: function(result) {
                     var plot = JSON.parse(result);
