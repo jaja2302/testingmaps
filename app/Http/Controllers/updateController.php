@@ -89,4 +89,10 @@ class updateController extends Controller
             return response()->json(['success' => false, 'message' => 'File not found.']);
         }
     }
+
+    public function conver(Request $request)
+
+    {
+        return view('concol');
+    }
 }

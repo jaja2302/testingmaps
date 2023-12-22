@@ -20,3 +20,4 @@ Route::get('/', [DashboardController::class, 'home'])->name('dashboard');
 Route::get('/drawmaps', [DashboardController::class, 'drawmaps'])->name('drawmaps');
 Route::get('/update', [updateController::class, 'index'])->name('uploadjson');
 Route::post('/uploaddata', [updateController::class, 'uploaddata'])->name('uploaddata');
+Route::get('/convert', [updateController::class, 'conver'])->name('convert');
