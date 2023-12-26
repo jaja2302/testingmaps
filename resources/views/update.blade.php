@@ -14,56 +14,72 @@
 
 <body>
 
-    <style>
-        /* Add this CSS to center the container */
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            /* Adjust this to fit your layout */
-        }
-    </style>
-    <div class="container">
-        <form id="geoJsonForm" enctype="multipart/form-data">
-            @csrf <!-- This will generate the CSRF token field -->
-            <input type="file" name="geoJsonFile" id="geoJsonFile" accept=".json">
-            <button type="button" id="uploadBtn">Upload GeoJSON</button>
-        </form>
-    </div>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">Your Logo</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('uploadjson') }}">Update maps dari Edit</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('convert') }}">Convert geomaps Json</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">Update maps dari geomaps</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#uploadBtn').on('click', function() {
-                let formData = new FormData();
-                let fileInput = $('#geoJsonFile')[0].files[0];
-                formData.append('geoJsonFile', fileInput); // Corrected the file name
+        <div class="container">
+            <form id="geoJsonForm" enctype="multipart/form-data">
+                @csrf <!-- This will generate the CSRF token field -->
+                <input type="file" name="geoJsonFile" id="geoJsonFile" accept=".json">
+                <button type="button" id="uploadBtn">Upload GeoJSON</button>
+            </form>
+        </div>
 
-                // Retrieve CSRF token from the meta tag
-                var _token = $('meta[name="csrf-token"]').attr('content');
-                formData.append('_token', _token);
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('#uploadBtn').on('click', function() {
+                    let formData = new FormData();
+                    let fileInput = $('#geoJsonFile')[0].files[0];
+                    formData.append('geoJsonFile', fileInput); // Corrected the file name
 
-                $.ajax({
-                    url: "{{ route('uploaddata') }}",
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        // Handle success response
-                        console.log('File uploaded successfully:', response);
-                    },
-                    error: function(xhr, status, error) {
-                        // Handle error
-                        console.error('Error uploading file:', error);
-                    }
+                    // Retrieve CSRF token from the meta tag
+                    var _token = $('meta[name="csrf-token"]').attr('content');
+                    formData.append('_token', _token);
+
+                    $.ajax({
+                        url: "{{ route('uploaddata') }}",
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            // Handle success response
+                            console.log('File uploaded successfully:', response);
+                        },
+                        error: function(xhr, status, error) {
+                            // Handle error
+                            console.error('Error uploading file:', error);
+                        }
+                    });
                 });
             });
-        });
-    </script>
+        </script>
 
-    </script>
+        </script>
 
 </body>
 

@@ -1,199 +1,185 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.app') <!-- Assuming 'app' is the name of your main layout -->
+@section('content')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Your existing CSS and scripts -->
+<style>
+    .box {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 20px;
+        max-height: 300px;
+        overflow: auto;
+        white-space: pre-wrap;
+    }
 
-    <style>
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .box {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 20px;
-            max-height: 300px;
-            overflow: auto;
-            white-space: pre-wrap;
-        }
-
-        .highlight {
-            color: #0366d6;
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container">
+    .highlight {
+        color: #0366d6;
+    }
+</style>
+<div class="row justify-content-center mt-10">
+    <div class="col-md-6 ">
         <form id="geoJsonForm" enctype="multipart/form-data">
             @csrf
             <input type="file" name="geoJsonFile" id="geoJsonFile" accept=".json">
             <button type="button" id="uploadBtn">Convert</button>
         </form>
     </div>
+</div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="box" id="uploadContent">
-                <p>Uploaded JSON:</p>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="box" id="formattedContent">
-                <p>Formatted JSON Preview:</p>
-            </div>
-        </div>
+<div class="row mt-4">
 
-        <div class="col-md-6">
-            <div class="box" id="finalContent">
-                <p>final JSON Preview:</p>
-            </div>
-        </div>
+    <div class="box" id="uploadContent">
+        <p>Uploaded JSON:</p>
     </div>
 
-    <script>
-        document.getElementById('geoJsonFile').addEventListener('change', function() {
-            const file = this.files[0];
-            const reader = new FileReader();
 
-            reader.onload = function(e) {
-                const content = e.target.result;
+    <div class="box" id="formattedContent">
+        <p>Formatted JSON Preview:</p>
+    </div>
 
-                try {
-                    const jsonContent = JSON.parse(content);
+</div>
 
-                    const uploadDiv = document.getElementById('uploadContent');
-                    uploadDiv.innerHTML = `<pre>${syntaxHighlight(content)}</pre>`;
+<div class="row mt-4">
 
-                    const formattedJson = convertJson(jsonContent);
-                    const formattedDiv = document.getElementById('formattedContent');
-                    formattedDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(formattedJson, null, 2))}</pre>`;
+    <div class="box" id="finalContent">
+        <p>Final JSON Preview:</p>
+    </div>
 
-                    const finalFormattedJson = finaljson(formattedJson);
-                    const finalDiv = document.getElementById('finalContent');
-                    finalDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(finalFormattedJson, null, 2))}</pre>`;
+</div>
 
-                } catch (error) {
-                    console.error("Invalid JSON file:", error);
 
-                    const uploadDiv = document.getElementById('uploadContent');
-                    uploadDiv.textContent = "Invalid JSON file!";
-                }
-            };
+<script>
+    document.getElementById('geoJsonFile').addEventListener('change', function() {
+        const file = this.files[0];
+        const reader = new FileReader();
 
-            reader.readAsText(file);
-        });
+        reader.onload = function(e) {
+            const content = e.target.result;
 
-        // Function to convert JSON (Implement your conversion logic here)
-        function convertJson(jsonContent) {
-            const features = jsonContent.features.map(feature => {
-                const coordinates = feature.properties ? [
-                    [parseFloat(feature.properties.utm_x.replace(',', '.')), parseFloat(feature.properties.utm_y.replace(',', '.'))]
-                ] : [];
+            try {
+                const jsonContent = JSON.parse(content);
 
-                return {
-                    type: "Feature",
-                    properties: {
-                        name: feature.properties ? feature.properties.block : null,
-                    },
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: coordinates,
-                    },
-                };
-            });
+                const uploadDiv = document.getElementById('uploadContent');
+                uploadDiv.innerHTML = `<pre>${syntaxHighlight(content)}</pre>`;
+
+                const formattedJson = convertJson(jsonContent);
+                const formattedDiv = document.getElementById('formattedContent');
+                formattedDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(formattedJson, null, 2))}</pre>`;
+
+                const finalFormattedJson = finaljson(formattedJson);
+                const finalDiv = document.getElementById('finalContent');
+                finalDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(finalFormattedJson, null, 2))}</pre>`;
+
+            } catch (error) {
+                console.error("Invalid JSON file:", error);
+
+                const uploadDiv = document.getElementById('uploadContent');
+                uploadDiv.textContent = "Invalid JSON file!";
+            }
+        };
+
+        reader.readAsText(file);
+    });
+
+    // Function to convert JSON (Implement your conversion logic here)
+    function convertJson(jsonContent) {
+        const features = jsonContent.features.map(feature => {
+            const coordinates = feature.properties ? [
+                [parseFloat(feature.properties.utm_x.replace(',', '.')), parseFloat(feature.properties.utm_y.replace(',', '.'))]
+            ] : [];
 
             return {
-                type: "FeatureCollection",
-                features: features.filter(feature => feature.properties.name !== null),
+                type: "Feature",
+                properties: {
+                    name: feature.properties ? feature.properties.block : null,
+                },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: coordinates,
+                },
             };
-        }
+        });
 
-        function finaljson(convertJson) {
-            const groupedFeatures = {};
+        return {
+            type: "FeatureCollection",
+            features: features.filter(feature => feature.properties.name !== null),
+        };
+    }
 
-            convertJson.features.forEach(feature => {
-                const name = feature.properties.name;
+    function finaljson(convertJson) {
+        const groupedFeatures = {};
 
-                if (!groupedFeatures[name]) {
-                    groupedFeatures[name] = {
-                        type: "Feature",
-                        properties: {
-                            name: name
-                        },
-                        geometry: {
-                            type: "Polygon",
-                            coordinates: []
-                        }
-                    };
-                }
+        convertJson.features.forEach(feature => {
+            const name = feature.properties.name;
 
-                groupedFeatures[name].geometry.coordinates.push(...feature.geometry.coordinates);
-            });
-
-            const mergedFeatures = Object.values(groupedFeatures).map(feature => {
-                return {
+            if (!groupedFeatures[name]) {
+                groupedFeatures[name] = {
                     type: "Feature",
                     properties: {
-                        name: feature.properties.name
+                        name: name
                     },
                     geometry: {
                         type: "Polygon",
-                        coordinates: [
-                            feature.geometry.coordinates
-                        ]
+                        coordinates: []
                     }
                 };
-            });
+            }
 
-            const mergedFeatureCollection = {
-                type: "FeatureCollection",
-                features: mergedFeatures
-            };
-
-            return mergedFeatureCollection;
-        }
-
-
-        // Function to syntax-highlight JSON
-        function syntaxHighlight(json) {
-            // Add your syntax highlighting logic here
-            return json;
-        }
-
-        document.getElementById('uploadBtn').addEventListener('click', function() {
-            // Get the final formatted JSON content
-            const finalDivContent = document.getElementById('finalContent').textContent;
-            const finalFormattedJson = JSON.parse(finalDivContent);
-
-            // Convert the JSON object to a string
-            const finalJsonString = JSON.stringify(finalFormattedJson, null, 2);
-
-            // Create a Blob object with the JSON data
-            const blob = new Blob([finalJsonString], {
-                type: 'application/json'
-            });
-
-            // Create a link element to trigger the download
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-
-            // Set the file name for the downloaded JSON file
-            link.download = 'final_formatted_json.json';
-
-            // Trigger the download
-            link.click();
+            groupedFeatures[name].geometry.coordinates.push(...feature.geometry.coordinates);
         });
-    </script>
 
-</body>
+        const mergedFeatures = Object.values(groupedFeatures).map(feature => {
+            return {
+                type: "Feature",
+                properties: {
+                    name: feature.properties.name
+                },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [
+                        feature.geometry.coordinates
+                    ]
+                }
+            };
+        });
 
-</html>
+        const mergedFeatureCollection = {
+            type: "FeatureCollection",
+            features: mergedFeatures
+        };
+
+        return mergedFeatureCollection;
+    }
+
+
+    // Function to syntax-highlight JSON
+    function syntaxHighlight(json) {
+        // Add your syntax highlighting logic here
+        return json;
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', function() {
+        // Get the final formatted JSON content
+        const finalDivContent = document.getElementById('finalContent').textContent;
+        const finalFormattedJson = JSON.parse(finalDivContent);
+
+        // Convert the JSON object to a string
+        const finalJsonString = JSON.stringify(finalFormattedJson, null, 2);
+
+        // Create a Blob object with the JSON data
+        const blob = new Blob([finalJsonString], {
+            type: 'application/json'
+        });
+
+        // Create a link element to trigger the download
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+
+        // Set the file name for the downloaded JSON file
+        link.download = 'final_formatted_json.json';
+
+        // Trigger the download
+        link.click();
+    });
+</script>
+
+@endsection

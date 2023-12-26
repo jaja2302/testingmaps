@@ -12,6 +12,34 @@ class updateController extends Controller
 
     public function index()
     {
+        // $data = [];
+        // $chunkSize = 1000; // Define your chunk size
+
+        // DB::table('mutu_ancak_new')
+        //     ->select("mutu_ancak_new.*", 'estate.*', DB::raw('DATE_FORMAT(mutu_ancak_new.datetime, "%M") as bulan'), DB::raw('DATE_FORMAT(mutu_ancak_new.datetime, "%Y") as tahun'))
+        //     ->join('estate', 'estate.est', '=', 'mutu_ancak_new.estate')
+        //     ->join('wil', 'wil.id', '=', 'estate.wil')
+        //     ->where('wil.regional', 1)
+        //     ->orderBy('estate', 'asc')
+        //     ->orderBy('afdeling', 'asc')
+        //     ->orderBy('blok', 'asc')
+        //     ->orderBy('datetime', 'asc')
+        //     ->chunk($chunkSize, function ($results) use (&$data) {
+        //         foreach ($results as $result) {
+        //             // Grouping logic here, if needed
+        //             $data[] = $result;
+        //             // Adjust this according to your grouping requirements
+        //         }
+        //     });
+
+        // // You might need to handle grouping outside the chunk loop, depending on your logic
+
+        // // Process the $data array as needed after the chunking is complete
+        // $data = collect($data)->groupBy(['estate', 'afdeling']);
+        // $data = $data->toArray(); // Convert to array if needed
+
+        // dd($data);
+
         return view('update', []);
     }
 
@@ -94,5 +122,55 @@ class updateController extends Controller
 
     {
         return view('concol');
+    }
+
+
+    public function updategeo(Request $request)
+
+    {
+        return view('updategeo');
+    }
+
+
+
+    public function geoupdate(Request $request)
+    {
+        set_time_limit(0); // Set execution time to unlimited (use with caution)
+
+        $file = $request->file('geoJsonFile');
+
+        // Read the uploaded JSON file
+        $jsonData = json_decode(file_get_contents($file), true);
+
+        // Extract 'features' from JSON data
+        $features = $jsonData['features'];
+
+        $bulkInsertData = []; // Initialize the bulk insert array
+
+        foreach ($features as $feature) {
+            // Extract 'name' and 'coordinates'
+            $name = $feature['properties']['name'];
+            $coordinates = $feature['geometry']['coordinates'];
+
+            foreach ($coordinates as $coordinateSet) {
+                foreach ($coordinateSet as $value) {
+                    // Prepare the data for bulk insert
+                    $bulkInsertData[] = [
+                        'nama' => $name,
+                        'afdeling' => 86, // Hardcoded 'afdeling' value
+                        'lat' => strval($value[1]), // Latitude
+                        'lon' => strval($value[0]), // Longitude
+                    ];
+                }
+            }
+        }
+
+        // Chunk and insert prepared data to database table 'blok'
+        $chunkedData = array_chunk($bulkInsertData, 1000); // Change the chunk size as needed
+        foreach ($chunkedData as $chunk) {
+            DB::table('blok')->insert($chunk);
+        }
+
+        return response()->json(['message' => 'Data inserted successfully']);
     }
 }
