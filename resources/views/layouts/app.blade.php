@@ -22,8 +22,14 @@
     <script src="{{asset('Leatlef/leaflet.js')}}"></script>
     <script src="{{asset('Leatlef/Leaflet.Editable.js')}}"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- Leaflet.draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
 
+    <!-- Leaflet.draw JavaScript -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
+    <!-- Add this in your HTML file -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
 </head>
 

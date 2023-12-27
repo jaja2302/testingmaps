@@ -14,6 +14,7 @@
         </select>
 
         <button class="btn btn-primary" id="button">Show</button>
+        <button class="btn btn-primary" id="saveButton">Save Draw</button>
     </div>
 
 
@@ -39,6 +40,60 @@
     var googleSatellite = L.tileLayer('http://{s}.google.com/vt?lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22, // Increase the maxZoom value to 22 or any desired value
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    });
+
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    var drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: drawnItems,
+            poly: {
+                allowIntersection: false
+            }
+        },
+        draw: {
+            polygon: {
+                allowIntersection: false,
+                showArea: true
+            }
+        }
+    });
+
+
+    map.addControl(drawControl);
+    var polygonCoordinates = []; // Define polygonCoordinates outside the event listener
+
+    map.on('draw:created', function(e) {
+        var layer = e.layer;
+        drawnItems.addLayer(layer);
+
+        // Access the polygon's coordinates
+        polygonCoordinates = layer.getLatLngs();
+        console.log('Polygon Coordinates:', polygonCoordinates);
+    });
+
+    $('#saveButton').click(function() {
+        let est = 'SCE';
+
+        // Flatten the nested arrays and extract lat/lng coordinates
+        var flattenedCoordinates = polygonCoordinates.flat(2).map(function(obj) {
+            return {
+                "lat": obj.lat,
+                "lon": obj.lng,
+                "est": est
+            };
+        });
+
+        var jsonData = JSON.stringify([flattenedCoordinates], null, 2);
+
+        // Create a Blob with the JSON data and save it as a JSON file
+        var blob = new Blob([jsonData], {
+            type: 'application/json;charset=utf-8'
+        });
+
+        // Save the Blob as a JSON file
+        saveAs(blob, 'coordinates.json');
     });
 
     // Add "Google Satellite" as the only base map
@@ -124,7 +179,7 @@
                     // You can further process these coordinates as needed
                 });
 
-                polygon.enableEdit();
+                // polygon.enableEdit();
             }
         }
 
@@ -133,48 +188,48 @@
             map.fitBounds(bounds);
         }
 
-        let saveButton = document.createElement('button');
-        saveButton.textContent = 'Save Changes';
-        saveButton.style.margin = '10px';
-        document.body.appendChild(saveButton);
+        // let saveButton = document.createElement('button');
+        // saveButton.textContent = 'Save Changes';
+        // saveButton.style.margin = '10px';
+        // document.body.appendChild(saveButton);
 
-        saveButton.addEventListener('click', function() {
-            let updatedCoordinates = [];
+        // saveButton.addEventListener('click', function() {
+        //     let updatedCoordinates = [];
 
-            // Iterate through polygons to retrieve updated coordinates
-            markersLayer2.eachLayer(function(layer) {
-                let coords = layer.getLatLngs()[0]; // Get updated coordinates of the polygon
-                let polygonData = [];
+        //     // Iterate through polygons to retrieve updated coordinates
+        //     markersLayer2.eachLayer(function(layer) {
+        //         let coords = layer.getLatLngs()[0]; // Get updated coordinates of the polygon
+        //         let polygonData = [];
 
-                coords.forEach(coord => {
-                    let {
-                        lat,
-                        lng: lon
-                    } = coord; // Destructure 'lng' as 'lon'
-                    let est = 'SJE'; // Hardcoded value for 'est'
+        //         coords.forEach(coord => {
+        //             let {
+        //                 lat,
+        //                 lng: lon
+        //             } = coord; // Destructure 'lng' as 'lon'
+        //             let est = 'SCE'; // Hardcoded value for 'est'
 
-                    polygonData.push({
-                        lat,
-                        lon,
-                        est
-                    });
-                });
+        //             polygonData.push({
+        //                 lat,
+        //                 lon,
+        //                 est
+        //             });
+        //         });
 
-                updatedCoordinates.push(polygonData);
-            });
+        //         updatedCoordinates.push(polygonData);
+        //     });
 
-            // Convert to JSON
-            let jsonData = JSON.stringify(updatedCoordinates, null, 2);
+        //     // Convert to JSON
+        //     let jsonData = JSON.stringify(updatedCoordinates, null, 2);
 
-            // Create a Blob and download as a text file
-            let blob = new Blob([jsonData], {
-                type: 'application/json'
-            });
-            let link = document.createElement('a');
-            link.download = 'edited_coordinates.json';
-            link.href = URL.createObjectURL(blob);
-            link.click();
-        });
+        //     // Create a Blob and download as a text file
+        //     let blob = new Blob([jsonData], {
+        //         type: 'application/json'
+        //     });
+        //     let link = document.createElement('a');
+        //     link.download = 'edited_coordinates.json';
+        //     link.href = URL.createObjectURL(blob);
+        //     link.click();
+        // });
 
 
 
@@ -259,56 +314,56 @@
 
 
 
-                // polygon.enableEdit();
+                polygon.enableEdit();
             }
         }
 
-        // let saveButton = document.createElement('button');
-        // saveButton.textContent = 'Save Changes';
-        // saveButton.style.margin = '10px';
-        // document.body.appendChild(saveButton);
+        let saveButton = document.createElement('button');
+        saveButton.textContent = 'Save Changes';
+        saveButton.style.margin = '10px';
+        document.body.appendChild(saveButton);
 
-        // saveButton.addEventListener('click', function() {
-        //     let updatedCoordinates = [];
+        saveButton.addEventListener('click', function() {
+            let updatedCoordinates = [];
 
-        //     markersLayer.eachLayer(function(layer) {
-        //         // Check if the layer has a popup
-        //         if (layer.getPopup()) {
-        //             let polygonName = layer.getPopup().getContent();
+            markersLayer.eachLayer(function(layer) {
+                // Check if the layer has a popup
+                if (layer.getPopup()) {
+                    let polygonName = layer.getPopup().getContent();
 
-        //             if (editedPolygons.has(polygonName)) {
-        //                 let coords = layer.getLatLngs()[0];
-        //                 let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
+                    if (editedPolygons.has(polygonName)) {
+                        let coords = layer.getLatLngs()[0];
+                        let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
 
-        //                 coords.forEach(coord => {
-        //                     let {
-        //                         lat,
-        //                         lng: lon
-        //                     } = coord;
+                        coords.forEach(coord => {
+                            let {
+                                lat,
+                                lng: lon
+                            } = coord;
 
-        //                     let coordinateData = {
-        //                         name: polygonName,
-        //                         afdeling: afdeling,
-        //                         lat,
-        //                         lon
-        //                     };
+                            let coordinateData = {
+                                name: polygonName,
+                                afdeling: afdeling,
+                                lat,
+                                lon
+                            };
 
-        //                     updatedCoordinates.push(coordinateData);
-        //                 });
-        //             }
-        //         }
-        //     });
+                            updatedCoordinates.push(coordinateData);
+                        });
+                    }
+                }
+            });
 
-        //     let jsonData = JSON.stringify(updatedCoordinates, null, 2);
+            let jsonData = JSON.stringify(updatedCoordinates, null, 2);
 
-        //     let blob = new Blob([jsonData], {
-        //         type: 'application/json'
-        //     });
-        //     let link = document.createElement('a');
-        //     link.download = 'edited_coordinates.json';
-        //     link.href = URL.createObjectURL(blob);
-        //     link.click();
-        // });
+            let blob = new Blob([jsonData], {
+                type: 'application/json'
+            });
+            let link = document.createElement('a');
+            link.download = 'edited_coordinates.json';
+            link.href = URL.createObjectURL(blob);
+            link.click();
+        });
 
         // Create a LatLngBounds object and fit the map to its bounds
         if (bounds.length > 0) {
