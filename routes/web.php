@@ -24,3 +24,4 @@ Route::post('/uploaddata', [updateController::class, 'uploaddata'])->name('uploa
 Route::get('/convert', [updateController::class, 'conver'])->name('convert');
 Route::get('/updategeo', [updateController::class, 'updategeo'])->name('updategeo');
 Route::post('/geoupdate', [updateController::class, 'geoupdate'])->name('geoupdate');
+Route::post('/formatjson', [updateController::class, 'formatjson'])->name('formatjson');

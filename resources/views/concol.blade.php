@@ -25,168 +25,61 @@
     </div>
 </div>
 
-<div class="row mt-4">
-
-    <div class="box" id="uploadContent">
-        <p>Uploaded JSON:</p>
-    </div>
-
-
-    <div class="box" id="formattedContent">
-        <p>Formatted JSON Preview:</p>
-    </div>
-
-</div>
-
-<div class="row mt-4">
-
-    <div class="box" id="finalContent">
-        <p>Final JSON Preview:</p>
-    </div>
-
-</div>
 
 
 <script>
-    document.getElementById('geoJsonFile').addEventListener('change', function() {
-        const file = this.files[0];
-        const reader = new FileReader();
+    $('#uploadBtn').click(function() {
+        const file = $('#geoJsonFile')[0].files[0]; // Get the file from the input element
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', $('input[name="_token"]').val());
 
-        reader.onload = function(e) {
-            const content = e.target.result;
-
-            try {
-                const jsonContent = JSON.parse(content);
-
-                const uploadDiv = document.getElementById('uploadContent');
-                uploadDiv.innerHTML = `<pre>${syntaxHighlight(content)}</pre>`;
-
-                const formattedJson = convertJson(jsonContent);
-                const formattedDiv = document.getElementById('formattedContent');
-                formattedDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(formattedJson, null, 2))}</pre>`;
-
-                const finalFormattedJson = finaljson(formattedJson);
-                const finalDiv = document.getElementById('finalContent');
-                finalDiv.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(finalFormattedJson, null, 2))}</pre>`;
-
-            } catch (error) {
-                console.error("Invalid JSON file:", error);
-
-                const uploadDiv = document.getElementById('uploadContent');
-                uploadDiv.textContent = "Invalid JSON file!";
+        Swal.fire({
+            title: 'Processing Data',
+            text: 'Please wait...',
+            allowOutsideClick: false,
+            onBeforeOpen: () => {
+                Swal.showLoading();
             }
-        };
-
-        reader.readAsText(file);
-    });
-
-    // Function to convert JSON (Implement your conversion logic here)
-    function convertJson(jsonContent) {
-        const features = jsonContent.features.map(feature => {
-            const coordinates = feature.properties ? [
-                [parseFloat(feature.properties.X.replace(',', '.')), parseFloat(feature.properties.Y.replace(',', '.'))]
-            ] : [];
-
-            return {
-                type: "Feature",
-                properties: {
-                    blok: feature.properties ? feature.properties.block : null,
-                    afdeling: feature.properties ? feature.properties.afdeling : null,
-                    estate: feature.properties ? feature.properties.estate : null,
-                },
-                geometry: {
-                    type: "Polygon",
-                    coordinates: coordinates,
-                },
-            };
         });
 
-        return {
-            type: "FeatureCollection",
-            features: features.filter(feature => feature.properties.block !== null),
-        };
-    }
+        $.ajax({
+            url: "{{ route('formatjson') }}",
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                // Handle the response from the server
+                Swal.close(); // Close the loading animation
 
-    function finaljson(convertedJson) {
-        const groupedFeatures = {};
+                // Trigger the download of the JSON file
+                const data = JSON.stringify(response);
 
-        convertedJson.features.forEach(feature => {
-            const block = feature.properties.blok;
-            const estate = feature.properties.estate; // Define estate property
-            const afdeling = feature.properties.afdeling; // Define afdeling property
+                const blob = new Blob([data], {
+                    type: 'application/json'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'formatted_data.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
 
-            if (!groupedFeatures[block]) {
-                groupedFeatures[block] = {
-                    type: "Feature",
-                    properties: {
-                        block: block,
-                        estate: estate, // Assign estate property
-                        afdeling: afdeling, // Assign afdeling property
-                    },
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: []
-                    }
-                };
+            error: function(xhr, status, error) {
+                // Handle errors in the AJAX request
+                console.error('AJAX request failed');
+                console.error(status + ': ' + error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Something went wrong!'
+                });
             }
-
-            groupedFeatures[block].geometry.coordinates.push(...feature.geometry.coordinates);
         });
-
-        const mergedFeatures = Object.values(groupedFeatures).map(feature => {
-            return {
-                type: "Feature",
-                properties: {
-                    block: feature.properties.block, // Adjusted property name
-                    estate: feature.properties.estate, // Adjusted property name
-                    afdeling: feature.properties.afdeling, // Adjusted property name
-                },
-                geometry: {
-                    type: "Polygon",
-                    coordinates: [
-                        feature.geometry.coordinates
-                    ]
-                }
-            };
-        });
-
-        const mergedFeatureCollection = {
-            type: "FeatureCollection",
-            features: mergedFeatures
-        };
-
-        return mergedFeatureCollection;
-    }
-
-
-    // Function to syntax-highlight JSON
-    function syntaxHighlight(json) {
-        // Add your syntax highlighting logic here
-        return json;
-    }
-
-    document.getElementById('uploadBtn').addEventListener('click', function() {
-        // Get the final formatted JSON content
-        const finalDivContent = document.getElementById('finalContent').textContent;
-        const finalFormattedJson = JSON.parse(finalDivContent);
-
-        // Convert the JSON object to a string
-        const finalJsonString = JSON.stringify(finalFormattedJson, null, 2);
-
-        // Create a Blob object with the JSON data
-        const blob = new Blob([finalJsonString], {
-            type: 'application/json'
-        });
-
-        // Create a link element to trigger the download
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-
-        // Set the file name for the downloaded JSON file
-        link.download = 'final_formatted_json.json';
-
-        // Trigger the download
-        link.click();
     });
 </script>
 

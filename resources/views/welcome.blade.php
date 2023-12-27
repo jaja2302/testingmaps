@@ -314,56 +314,56 @@
 
 
 
-                polygon.enableEdit();
+                // polygon.enableEdit();
             }
         }
 
-        let saveButton = document.createElement('button');
-        saveButton.textContent = 'Save Changes';
-        saveButton.style.margin = '10px';
-        document.body.appendChild(saveButton);
+        // let saveButton = document.createElement('button');
+        // saveButton.textContent = 'Save Changes';
+        // saveButton.style.margin = '10px';
+        // document.body.appendChild(saveButton);
 
-        saveButton.addEventListener('click', function() {
-            let updatedCoordinates = [];
+        // saveButton.addEventListener('click', function() {
+        //     let updatedCoordinates = [];
 
-            markersLayer.eachLayer(function(layer) {
-                // Check if the layer has a popup
-                if (layer.getPopup()) {
-                    let polygonName = layer.getPopup().getContent();
+        //     markersLayer.eachLayer(function(layer) {
+        //         // Check if the layer has a popup
+        //         if (layer.getPopup()) {
+        //             let polygonName = layer.getPopup().getContent();
 
-                    if (editedPolygons.has(polygonName)) {
-                        let coords = layer.getLatLngs()[0];
-                        let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
+        //             if (editedPolygons.has(polygonName)) {
+        //                 let coords = layer.getLatLngs()[0];
+        //                 let afdeling = afdelingMap[polygonName]; // Retrieve afdeling from the map
 
-                        coords.forEach(coord => {
-                            let {
-                                lat,
-                                lng: lon
-                            } = coord;
+        //                 coords.forEach(coord => {
+        //                     let {
+        //                         lat,
+        //                         lng: lon
+        //                     } = coord;
 
-                            let coordinateData = {
-                                name: polygonName,
-                                afdeling: afdeling,
-                                lat,
-                                lon
-                            };
+        //                     let coordinateData = {
+        //                         name: polygonName,
+        //                         afdeling: afdeling,
+        //                         lat,
+        //                         lon
+        //                     };
 
-                            updatedCoordinates.push(coordinateData);
-                        });
-                    }
-                }
-            });
+        //                     updatedCoordinates.push(coordinateData);
+        //                 });
+        //             }
+        //         }
+        //     });
 
-            let jsonData = JSON.stringify(updatedCoordinates, null, 2);
+        //     let jsonData = JSON.stringify(updatedCoordinates, null, 2);
 
-            let blob = new Blob([jsonData], {
-                type: 'application/json'
-            });
-            let link = document.createElement('a');
-            link.download = 'edited_coordinates.json';
-            link.href = URL.createObjectURL(blob);
-            link.click();
-        });
+        //     let blob = new Blob([jsonData], {
+        //         type: 'application/json'
+        //     });
+        //     let link = document.createElement('a');
+        //     link.download = 'edited_coordinates.json';
+        //     link.href = URL.createObjectURL(blob);
+        //     link.click();
+        // });
 
         // Create a LatLngBounds object and fit the map to its bounds
         if (bounds.length > 0) {

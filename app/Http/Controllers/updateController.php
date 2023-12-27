@@ -143,28 +143,45 @@ class updateController extends Controller
         $jsonData = json_decode(file_get_contents($file), true);
 
         // Extract 'features' from JSON data
+
+        // dd($jsonData);
         $features = $jsonData['features'];
 
         $bulkInsertData = []; // Initialize the bulk insert array
 
         foreach ($features as $feature) {
             // Extract 'name' and 'coordinates'
-            $name = $feature['properties']['name'];
+            $name = $feature['properties']['block'];
+            $estate = $feature['properties']['estate'];
+            $afd = $feature['properties']['afdeling'];
             $coordinates = $feature['geometry']['coordinates'];
 
+            // dd($feature);
+
+            $id =  DB::table('afdeling')
+                ->select('afdeling.*')
+                ->join('estate', 'estate.id', '=', 'afdeling.estate')
+                ->where('estate.est', $estate)
+                ->where('afdeling.nama', $afd)
+                ->pluck('id');
+            // $id = $id->get(0); // Using get() method
+
+            // OR
+
+            $id = $id[0]; // Using square brackets
+
             foreach ($coordinates as $coordinateSet) {
-                foreach ($coordinateSet as $value) {
-                    // Prepare the data for bulk insert
-                    $bulkInsertData[] = [
-                        'nama' => $name,
-                        'afdeling' => 86, // Hardcoded 'afdeling' value
-                        'lat' => strval($value[1]), // Latitude
-                        'lon' => strval($value[0]), // Longitude
-                    ];
-                }
+                // dd($coordinateSet);
+                $bulkInsertData[] = [
+                    'nama' => $name,
+                    'afdeling' => $id,
+                    'lat' => strval($coordinateSet[1]), // Latitude
+                    'lon' => strval($coordinateSet[0]), // Longitude
+                ];
             }
         }
 
+        // dd($bulkInsertData);
         // Chunk and insert prepared data to database table 'blok'
         $chunkedData = array_chunk($bulkInsertData, 1000); // Change the chunk size as needed
         foreach ($chunkedData as $chunk) {
@@ -172,5 +189,141 @@ class updateController extends Controller
         }
 
         return response()->json(['message' => 'Data inserted successfully']);
+    }
+
+
+    public function formatjson(Request $request)
+    {
+        $uploadedFile = $request->file('file');
+
+        if ($uploadedFile->isValid()) {
+            $decodedData = json_decode($uploadedFile->get(), true);
+
+            $features = $decodedData['features'];
+
+            $chunkSize = 1000; // Define your desired chunk size
+            $totalFeatures = count($features);
+
+            $processedFeatures = [];
+
+            for ($i = 0; $i < $totalFeatures; $i += $chunkSize) {
+                $chunk = array_slice($features, $i, $chunkSize);
+
+                $convertedFeatures = [];
+
+                foreach ($chunk as $feature) {
+                    $X = floatval(str_replace(',', '.', $feature['properties']['X']));
+                    $Y = floatval(str_replace(',', '.', $feature['properties']['Y']));
+
+                    $coordinates = $feature['properties'] ? [[$X, $Y]] : [];
+
+                    $convertedFeatures[] = [
+                        'type' => 'Feature',
+                        'properties' => [
+                            'blok' => $feature['properties'] ? $feature['properties']['block'] : null,
+                            'afdeling' => $feature['properties'] ? $feature['properties']['afdeling'] : null,
+                            'estate' => $feature['properties'] ? $feature['properties']['estate'] : null,
+                        ],
+                        'geometry' => [
+                            'type' => 'Polygon',
+                            'coordinates' => $coordinates,
+                        ],
+                    ];
+                }
+
+                $convertedJson = [
+                    'type' => 'FeatureCollection',
+                    'features' => array_filter($convertedFeatures, function ($feature) {
+                        return $feature['properties']['blok'] !== null;
+                    }),
+                ];
+
+                $groupedFeatures = [];
+
+                foreach ($convertedJson['features'] as $feature) {
+                    $block = $feature['properties']['blok'];
+                    $estate = $feature['properties']['estate'];
+                    $afdeling = $feature['properties']['afdeling'];
+
+                    if (!isset($groupedFeatures[$block])) {
+                        $groupedFeatures[$block] = [
+                            'type' => 'Feature',
+                            'properties' => [
+                                'block' => $block,
+                                'estate' => $estate,
+                                'afdeling' => $afdeling,
+                            ],
+                            'geometry' => [
+                                'type' => 'Polygon',
+                                'coordinates' => [],
+                            ],
+                        ];
+                    }
+
+                    $groupedFeatures[$block]['geometry']['coordinates'] = array_merge(
+                        $groupedFeatures[$block]['geometry']['coordinates'],
+                        $feature['geometry']['coordinates']
+                    );
+                }
+
+                $mergedFeatures = array_map(function ($feature) {
+                    return [
+                        'type' => 'Feature',
+                        'properties' => [
+                            'block' => $feature['properties']['block'],
+                            'estate' => $feature['properties']['estate'],
+                            'afdeling' => $feature['properties']['afdeling'],
+                        ],
+                        'geometry' => [
+                            'type' => 'Polygon',
+                            'coordinates' => [$feature['geometry']['coordinates']],
+                        ],
+                    ];
+                }, array_values($groupedFeatures));
+
+                $mergedFeatureCollection = [
+                    'type' => 'FeatureCollection',
+                    'features' => $mergedFeatures,
+                ];
+
+                $processedFeatures[] = $mergedFeatureCollection;
+            }
+
+            $finalFeatures = [];
+
+            foreach ($processedFeatures as $processedFeature) {
+                foreach ($processedFeature['features'] as $feature) {
+                    // Create an individual feature
+                    $finalFeature = [
+                        'type' => 'Feature',
+                        'properties' => [
+                            'block' => $feature['properties']['block'],
+                            'estate' => $feature['properties']['estate'],
+                            'afdeling' => $feature['properties']['afdeling'],
+                        ],
+                        'geometry' => [
+                            'type' => 'Polygon',
+                            'coordinates' => $feature['geometry']['coordinates'][0], // Assuming coordinates are stored as an array
+                        ],
+                    ];
+
+                    // Push this feature into the final features array
+                    $finalFeatures[] = $finalFeature;
+                }
+            }
+
+            // Create the final FeatureCollection
+            $finalFeatureCollection = [
+                'type' => 'FeatureCollection',
+                'features' => $finalFeatures,
+            ];
+
+            // Return the final formatted data
+
+            // dd($finalFeatureCollection, $processedFeatures);
+            return response()->json($finalFeatureCollection, 200);
+        }
+
+        return response()->json(['error' => 'Invalid file'], 400);
     }
 }
