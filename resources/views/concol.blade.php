@@ -84,13 +84,15 @@
     function convertJson(jsonContent) {
         const features = jsonContent.features.map(feature => {
             const coordinates = feature.properties ? [
-                [parseFloat(feature.properties.utm_x.replace(',', '.')), parseFloat(feature.properties.utm_y.replace(',', '.'))]
+                [parseFloat(feature.properties.X.replace(',', '.')), parseFloat(feature.properties.Y.replace(',', '.'))]
             ] : [];
 
             return {
                 type: "Feature",
                 properties: {
-                    name: feature.properties ? feature.properties.block : null,
+                    blok: feature.properties ? feature.properties.block : null,
+                    afdeling: feature.properties ? feature.properties.afdeling : null,
+                    estate: feature.properties ? feature.properties.estate : null,
                 },
                 geometry: {
                     type: "Polygon",
@@ -101,21 +103,25 @@
 
         return {
             type: "FeatureCollection",
-            features: features.filter(feature => feature.properties.name !== null),
+            features: features.filter(feature => feature.properties.block !== null),
         };
     }
 
-    function finaljson(convertJson) {
+    function finaljson(convertedJson) {
         const groupedFeatures = {};
 
-        convertJson.features.forEach(feature => {
-            const name = feature.properties.name;
+        convertedJson.features.forEach(feature => {
+            const block = feature.properties.blok;
+            const estate = feature.properties.estate; // Define estate property
+            const afdeling = feature.properties.afdeling; // Define afdeling property
 
-            if (!groupedFeatures[name]) {
-                groupedFeatures[name] = {
+            if (!groupedFeatures[block]) {
+                groupedFeatures[block] = {
                     type: "Feature",
                     properties: {
-                        name: name
+                        block: block,
+                        estate: estate, // Assign estate property
+                        afdeling: afdeling, // Assign afdeling property
                     },
                     geometry: {
                         type: "Polygon",
@@ -124,14 +130,16 @@
                 };
             }
 
-            groupedFeatures[name].geometry.coordinates.push(...feature.geometry.coordinates);
+            groupedFeatures[block].geometry.coordinates.push(...feature.geometry.coordinates);
         });
 
         const mergedFeatures = Object.values(groupedFeatures).map(feature => {
             return {
                 type: "Feature",
                 properties: {
-                    name: feature.properties.name
+                    block: feature.properties.block, // Adjusted property name
+                    estate: feature.properties.estate, // Adjusted property name
+                    afdeling: feature.properties.afdeling, // Adjusted property name
                 },
                 geometry: {
                     type: "Polygon",
