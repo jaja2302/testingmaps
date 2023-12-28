@@ -144,13 +144,15 @@ class updateController extends Controller
 
         // Extract 'features' from JSON data
 
-        // dd($jsonData);
+        // dd($jsonData['features'][0], $jsonData['features'][193]);
         $features = $jsonData['features'];
 
         $bulkInsertData = []; // Initialize the bulk insert array
 
         foreach ($features as $feature) {
             // Extract 'name' and 'coordinates'
+
+            // dd($feature);
             $name = $feature['properties']['block'];
             $estate = $feature['properties']['estate'];
             $afd = $feature['properties']['afdeling'];
@@ -168,7 +170,7 @@ class updateController extends Controller
 
             // OR
 
-            $id = $id[0]; // Using square brackets
+            $id = $id[0] ?? 0;
 
             foreach ($coordinates as $coordinateSet) {
                 // dd($coordinateSet);
@@ -220,7 +222,7 @@ class updateController extends Controller
                     $convertedFeatures[] = [
                         'type' => 'Feature',
                         'properties' => [
-                            'blok' => $feature['properties'] ? $feature['properties']['block'] : null,
+                            'blok' => $feature['properties'] ? $feature['properties']['block']  : null,
                             'afdeling' => $feature['properties'] ? $feature['properties']['afdeling'] : null,
                             'estate' => $feature['properties'] ? $feature['properties']['estate'] : null,
                         ],
