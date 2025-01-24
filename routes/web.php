@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\updateController;
+use App\Http\Controllers\DashboardgisController;
 
 
 /*
@@ -25,3 +26,8 @@ Route::get('/convert', [updateController::class, 'conver'])->name('convert');
 Route::get('/updategeo', [updateController::class, 'updategeo'])->name('updategeo');
 Route::post('/geoupdate', [updateController::class, 'geoupdate'])->name('geoupdate');
 Route::post('/formatjson', [updateController::class, 'formatjson'])->name('formatjson');
+
+
+Route::get('/dashboardgis', [DashboardgisController::class, 'index'])->name('dashboard.gis');
+Route::get('/gis/plots', [DashboardgisController::class, 'getPlots'])->name('gis.getPlots');
+Route::post('/gis/save-plots', [DashboardgisController::class, 'savePlots'])->name('gis.savePlots');

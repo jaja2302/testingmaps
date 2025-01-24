@@ -69,6 +69,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{route ('updategeo')}}">Update maps dari geomaps</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route ('dashboard.gis')}}">Update maps dari Gis</a>
+                        </li>
                     </ul>
                 </div>
             </div>
