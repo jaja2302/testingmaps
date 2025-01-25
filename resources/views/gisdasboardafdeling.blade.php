@@ -9,8 +9,14 @@
     <div>
         <select name="estate" id="estate">
             <option value="">Pilih Estate</option>
-            @foreach ($list_options as $estate)
+            @foreach ($list_est as $estate)
             <option value="{{$estate}}">{{$estate}}</option>
+            @endforeach
+        </select>
+        <select name="afdeling" id="afdeling">
+            <option value="">Pilih Afdeling</option>
+            @foreach ($list_afdeling as $afdeling)
+            <option value="{{$afdeling}}">{{$afdeling}}</option>
             @endforeach
         </select>
 
@@ -61,16 +67,22 @@
 
     $('#button').click(function() {
         var estate = $('#estate').val();
+        var afdeling = $('#afdeling').val();
         if (!estate) {
             alert('Please select an estate first');
             return;
         }
+        if (!afdeling) {
+            alert('Please select an afdeling first');
+            return;
+        }
 
         $.ajax({
-            url: "{{ route('gis.getPlots') }}",
+            url: "{{ route('gis.getPlotsafdeling') }}",
             method: 'get',
             data: {
-                estate: estate
+                estate: estate,
+                afdeling: afdeling
             },
             success: function(result) {
                 drawPlots(result.plots);
@@ -124,11 +136,15 @@
 
     $('#saveButton').click(function() {
         let est = $('#estate').val();
+        let afdeling = $('#afdeling').val();
         if (!est) {
             alert('Please select an estate first');
             return;
         }
-
+        if (!afdeling) {
+            alert('Please select an afdeling first');
+            return;
+        }
         if (!currentPolygon) {
             alert('No polygon to save');
             return;
@@ -159,13 +175,14 @@
         $('#saveButton').prop('disabled', true).text('Saving...');
 
         $.ajax({
-            url: "{{ route('gis.savePlots') }}",
+            url: "{{ route('gis.savePlotsafdeling') }}",
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: {
                 est: est,
+                afdeling: afdeling,
                 coordinates: coordinates
             },
             success: function(response) {

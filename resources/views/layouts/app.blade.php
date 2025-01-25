@@ -72,6 +72,15 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{route ('dashboard.gis')}}">Update maps dari Gis</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route ('dashboard.gisafdeling')}}">Update maps dari Gis Afdeling</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route ('dashboard.giscompany')}}">Update maps dari Gis Company</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route ('dashboard.gisregional')}}">Update maps dari Gis Regional</a>
+                        </li>
                     </ul>
                 </div>
             </div>

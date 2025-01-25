@@ -7,10 +7,10 @@
     </div>
 
     <div>
-        <select name="estate" id="estate">
-            <option value="">Pilih Estate</option>
-            @foreach ($list_options as $estate)
-            <option value="{{$estate}}">{{$estate}}</option>
+        <select name="regional" id="regional">
+            <option value="">Pilih regional</option>
+            @foreach ($regional as $regional)
+            <option value="{{$regional}}">{{$regional}}</option>
             @endforeach
         </select>
 
@@ -60,17 +60,17 @@
     var markersLayer = L.layerGroup().addTo(map);
 
     $('#button').click(function() {
-        var estate = $('#estate').val();
-        if (!estate) {
-            alert('Please select an estate first');
+        var regional = $('#regional').val();
+        if (!regional) {
+            alert('Please select an regional first');
             return;
         }
 
         $.ajax({
-            url: "{{ route('gis.getPlots') }}",
+            url: "{{ route('gis.getPlotsregional') }}",
             method: 'get',
             data: {
-                estate: estate
+                regional: regional
             },
             success: function(result) {
                 drawPlots(result.plots);
@@ -123,9 +123,9 @@
     }
 
     $('#saveButton').click(function() {
-        let est = $('#estate').val();
-        if (!est) {
-            alert('Please select an estate first');
+        let regional = $('#regional').val();
+        if (!regional) {
+            alert('Please select an regional first');
             return;
         }
 
@@ -159,13 +159,13 @@
         $('#saveButton').prop('disabled', true).text('Saving...');
 
         $.ajax({
-            url: "{{ route('gis.savePlots') }}",
+            url: "{{ route('gis.savePlotsregional') }}",
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: {
-                est: est,
+                regional: regional,
                 coordinates: coordinates
             },
             success: function(response) {

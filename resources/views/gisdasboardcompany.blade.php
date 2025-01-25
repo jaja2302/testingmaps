@@ -7,10 +7,16 @@
     </div>
 
     <div>
-        <select name="estate" id="estate">
-            <option value="">Pilih Estate</option>
-            @foreach ($list_options as $estate)
-            <option value="{{$estate}}">{{$estate}}</option>
+        <select name="company_plot__id" id="company_plot__id">
+            <option value="">Pilih company_plot__id</option>
+            @foreach ($company_plot__id as $company_plot__id)
+            <option value="{{$company_plot__id}}">{{$company_plot__id}}</option>
+            @endforeach
+        </select>
+        <select name="company_plot__pt" id="company_plot__pt">
+            <option value="">Pilih company_plot__pt</option>
+            @foreach ($company_plot__pt as $company_plot__pt)
+            <option value="{{$company_plot__pt}}">{{$company_plot__pt}}</option>
             @endforeach
         </select>
 
@@ -60,17 +66,23 @@
     var markersLayer = L.layerGroup().addTo(map);
 
     $('#button').click(function() {
-        var estate = $('#estate').val();
-        if (!estate) {
-            alert('Please select an estate first');
+        var company_plot__id = $('#company_plot__id').val();
+        var company_plot__pt = $('#company_plot__pt').val();
+        if (!company_plot__id) {
+            alert('Please select an company_plot__id first');
+            return;
+        }
+        if (!company_plot__pt) {
+            alert('Please select an company_plot__pt first');
             return;
         }
 
         $.ajax({
-            url: "{{ route('gis.getPlots') }}",
+            url: "{{ route('gis.getPlotscompany') }}",
             method: 'get',
             data: {
-                estate: estate
+                company_plot__id: company_plot__id,
+                company_plot__pt: company_plot__pt
             },
             success: function(result) {
                 drawPlots(result.plots);
@@ -123,12 +135,16 @@
     }
 
     $('#saveButton').click(function() {
-        let est = $('#estate').val();
-        if (!est) {
-            alert('Please select an estate first');
+        let company_plot__id = $('#company_plot__id').val();
+        let company_plot__pt = $('#company_plot__pt').val();
+        if (!company_plot__id) {
+            alert('Please select an company_plot__id first');
             return;
         }
-
+        if (!company_plot__pt) {
+            alert('Please select an company_plot__pt first');
+            return;
+        }
         if (!currentPolygon) {
             alert('No polygon to save');
             return;
@@ -159,13 +175,14 @@
         $('#saveButton').prop('disabled', true).text('Saving...');
 
         $.ajax({
-            url: "{{ route('gis.savePlots') }}",
+            url: "{{ route('gis.savePlotscompany') }}",
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             data: {
-                est: est,
+                company_plot__id: company_plot__id,
+                company_plot__pt: company_plot__pt,
                 coordinates: coordinates
             },
             success: function(response) {
